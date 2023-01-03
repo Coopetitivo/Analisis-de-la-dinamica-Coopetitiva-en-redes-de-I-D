@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import copy
 import scipy.stats as ss
+import heapq
 
 def corrector(matriz):
 
@@ -195,7 +196,7 @@ def markov(init, matriz, t, condicion=0 ,estados=[]):
 
     return(simlist)
 
-def DTMC_SIS(beta, gamma, poblacion, c_tiempo, duracion, NA=1, NB=1, JA=1, JB=1): #Markov_Chain_epidemic_models_and_Parameter_Estimation
+def DTMC_SIS(beta, gamma, poblacion, c_tiempo, duracion): #Markov_Chain_epidemic_models_and_Parameter_Estimation
 
     #Los infectados puede ser un vector donde se almacene un 
     #vector de valores unicos
@@ -208,8 +209,8 @@ def DTMC_SIS(beta, gamma, poblacion, c_tiempo, duracion, NA=1, NB=1, JA=1, JB=1)
     M_T = np.matrix(np.zeros((dt,dt)))
     M_T[0,0]=1
     Tc = []
-
-    tc = c_tiempo/(10)
+    
+    tc = c_tiempo
     
     Tc.append(c_tiempo)
     
@@ -281,7 +282,7 @@ def DTMC_SI(beta, poblacion, c_tiempo, duracion, infectado): #Markov_Chain_epide
     M_T[0,0]=1
     Tc = []
 
-    tc = c_tiempo/(10)
+    tc = c_tiempo
     
     Tc.append(c_tiempo)
     
@@ -468,14 +469,14 @@ def diferencias(Matriz, coeficientes, pesos_fila):
                 
                 d = coeficientes.loc[rows, :].to_numpy()[0][0]
 
-                if c <= d: #Si la posición i,j es menor o igual a un coeficiente realice
+                if c < d: #Si la posición i,j es menor o igual a un coeficiente realice
                 
                     a = coeficientes.loc[rows,:].to_numpy()[0][0] - Matriz.loc[rows,cols] #Restar el JA-Jij
                     a = a.to_numpy()[0]
                     Matriz2.loc[rows,cols] = a #Guardelo en la posición i,j de la matriz
                     inf[rows].update({cols : a}) #Guardelo en el diccionario
 
-                elif c > d: #Si la posición i,j es mayor a un coeficiente realice
+                elif c >= d: #Si la posición i,j es mayor a un coeficiente realice
                     
                     a = Matriz.loc[rows,cols] - coeficientes.loc[rows,:].to_numpy()[0][0] #Restar el Jij-JA
                     a = a.to_numpy()[0]
@@ -509,7 +510,7 @@ def diferencias(Matriz, coeficientes, pesos_fila):
                 
                 d = coeficientes.loc[rows, :].to_numpy()[0][0]
 
-                if c <= d: #Si la posición i,j es menor o igual a un coeficiente realice
+                if c < d: #Si la posición i,j es menor o igual a un coeficiente realice
                 
                     a = coeficientes.loc[rows,:].to_numpy()[0][0] - Matriz.loc[rows,cols] #Restar el JA-Jij
                     a = a.to_numpy()[0][0]
@@ -518,7 +519,7 @@ def diferencias(Matriz, coeficientes, pesos_fila):
                     else:
                         Matriz2.loc[rows,cols] = a*prob_E[rows]/peso_E[rows] #Guardelo en la posición i,j de la matriz
                         
-                elif c > d: #Si la posición i,j es mayor a un coeficiente realice
+                elif c >= d: #Si la posición i,j es mayor a un coeficiente realice
                     
                     a = Matriz.loc[rows,cols] - coeficientes.loc[rows,:].to_numpy()[0][0] #Restar el Jij-JA
                     a = a.to_numpy()[0][0]
@@ -722,23 +723,75 @@ class Graph():
         
         return(self.frame)
     
-# Driver program
+ #Driver program
 #g = Graph(9)
 #g.graph = np.array([[0, 4, 0, 0, 0, 0, 0, 8, 0],
- #          [4, 0, 8, 0, 0, 0, 0, 11, 0],
-  #         [0, 8, 0, 7, 0, 4, 0, 0, 2],
-   #        [0, 0, 7, 0, 9, 14, 0, 0, 0],
-    #       [0, 0, 0, 9, 0, 10, 0, 0, 0],
-     #      [0, 0, 4, 14, 10, 0, 2, 0, 0],
-      #     [0, 0, 0, 0, 0, 2, 0, 1, 6],
-       #    [8, 11, 0, 0, 0, 0, 1, 0, 7],
-        #   [0, 0, 2, 0, 0, 0, 6, 7, 0]
-         #  ])
+       #    [4, 0, 8, 0, 0, 0, 0, 11, 0],
+        #   [0, 8, 0, 7, 0, 4, 0, 0, 2],
+         #  [0, 0, 7, 0, 9, 14, 0, 0, 0],
+          # [0, 0, 0, 9, 0, 10, 0, 0, 0],
+           #[0, 0, 4, 14, 10, 0, 2, 0, 0],
+           #[0, 0, 0, 0, 0, 2, 0, 1, 6],
+           #[8, 11, 0, 0, 0, 0, 1, 0, 7],
+           #[0, 0, 2, 0, 0, 0, 6, 7, 0]
+           #])
 
 
  
 #print(g.dijkstra(0))
 
+
+
+def dijkstra(graph, start, end):
+    # Creamos un diccionario para almacenar los nodos previos
+    prev = {}
+    # Creamos un diccionario para almacenar las distancias
+    distances = {}
+    # Inicializamos todas las distancias en infinito
+    # y todos los nodos previos en None
+    for node in graph:
+        distances[node] = float('inf')
+        prev[node] = None
+    # Establecemos la distancia del nodo de inicio en 0
+    distances[start] = 0
+    # Creamos una cola de prioridad para seleccionar el nodo más cercano
+    # utilizamos el módulo heapq y tuplas (distance, node)
+    heap = [(0, start)]
+    # Mientras haya nodos en la cola de prioridad
+    while heap:
+        # Tomamos el nodo más cercano
+        distance, node = heapq.heappop(heap)
+        # Si llegamos al nodo final, terminamos el ciclo
+        if node == end:
+            break
+        # Si no hemos visitado aún el nodo
+        if distance == distances[node]:
+            # Iteramos sobre sus vecinos
+            for neighbor, cost in graph[node].items():
+                # Calculamos la nueva distancia al vecino
+                new_distance = distance + cost
+                # Si la nueva distancia es menor que la distancia actual del vecino
+                if new_distance < distances[neighbor]:
+                    # Actualizamos la distancia del vecino
+                    distances[neighbor] = new_distance
+                    # Establecemos el nodo actual como el nodo previo del vecino
+                    prev[neighbor] = node
+                    # Añadimos el vecino a la cola de prioridad
+                    heapq.heappush(heap, (new_distance, neighbor))
+    # Creamos una lista para almacenar el camino más corto
+    path = []
+    # Establecemos el nodo final como el nodo actual
+    node = end
+    # Mientras tengamos un nodo previo
+    while node is not None:
+        # Añadimos el nodo a la lista
+        path.append(node)
+        # Actualizamos el nodo actual con su nodo previo
+        node = prev[node]
+    # Devolvemos la lista invertida (del nodo final al nodo inicial)
+    return path[::-1]
+
+#https://chat.openai.com/chat
 
  
 # This code is contributed by Divyanshu Mehta
@@ -770,7 +823,7 @@ def competencia(Ai, A_k, B, M, M_caracteristicas):
         
         G.index = A_k
         
-        D_A_ij = (1/G.loc[B, :].to_numpy()[0]) * (1/M_caracteristicas.loc[i, :].to_numpy()[0])
+        D_A_ij = G.loc[B, :].to_numpy()[0] * (1/M_caracteristicas.loc[i, :].to_numpy()[0])
       
         D_A_i.update({i:D_A_ij})
         
@@ -783,7 +836,7 @@ def competencia(Ai, A_k, B, M, M_caracteristicas):
     
     for i in D_A_i:
         
-        if D_A_i[i] <= D_A_i[Ai]:
+        if D_A_i[i] < D_A_i[Ai]:
             
             inf.update({i : D_A_i[Ai]-D_A_i[i]})
             
@@ -849,6 +902,7 @@ def new_conex(M_conex):
 def incremento(CTI, CTIS):
     
         # Se 1-CTI
+    np.random.seed(1)
     CTI = CTI.to_numpy()[0]
     
     CTJ = copy.deepcopy(CTIS)
@@ -870,7 +924,7 @@ def incremento(CTI, CTIS):
         
             # Lo ultimo será la probabilidad de incremento
             # en las capacidades tecnologicas
-
+    np.random.seed(None)
     return (CTJ)
         
         

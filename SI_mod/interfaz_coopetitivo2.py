@@ -43,11 +43,66 @@ class SIS_interfaz(tk.Tk):
                     self.cont0.destroy()], bg = 'mintcream')
 
         self.button.pack(side = "bottom",pady = 10 , padx = 10)
+        
+        self.button2 = tk.Button(self.cont0,
+                                 text = "Simular capacidades",
+                                 command=lambda:[self.cap(),
+                                                 self.cont0.destroy()],
+                                 bg="mintcream")
+        self.button2.pack(side = "bottom", pady=10, padx=10)
 
         self.container.pack(fill='both',
                 side='left', expand=True)
         #self.container2.pack(fill='both' ,
          #       side='right' ,expand = True)
+
+
+    def cap(self):
+        
+        self.cont0.destroy()
+        self.cont = tk.Frame(self, bg="azure")
+        self.cont.pack(fill="both", expand=True)
+        vals = [i[0] for i in coeficientes.columns]
+        self.cti = []
+        self.combo = ttk.Combobox(self.cont, values=vals,
+                                  state="readonly")
+        self.combo.set(vals[0])
+        c = [i[0] for i in M_conex.columns]
+        
+        self.choice = ttk.Combobox(self.cont, values=c,
+                                  state="readonly")
+        self.combo.pack(padx=10, pady=10)
+        tk.Label(self.cont, text="Entidad de la cual se extraera una parte de sus capacidades").pack(padx=10, pady=10)
+        self.choice.pack(padx=10, pady=10)
+        self.choice.set(c[0])
+        self.boton = tk.Button(self.cont, text="Añadir capacidad",
+                               command=lambda:[self.cti.append(self.combo.get())],
+                               bg="mintcream")
+        self.boton.pack()
+        self.boton2 = tk.Button(self.cont, text="siguiente",bg="mintcream",
+                                command=lambda:[self.cap1(), self.cont.destroy()])
+        
+        self.boton2.pack()
+    
+    def cap1(self):
+        
+        self.cti = np.unique(self.cti)
+        
+        for i in self.cti:
+            pd.set_option("display.max_rows", None)
+            print(M_caracteristicas.loc[:,i])
+            a = M_caracteristicas.loc[:, i]
+            b = M_caracteristicas.loc[self.choice.get(), i]
+            
+            a = Sc.incremento(1-b, a)
+            M_caracteristicas.loc[:,i]=a
+            print(M_caracteristicas.loc[:,i])
+            pd.set_option("display.max_rows", 5)
+        
+        
+        return self.coop()
+        
+        
 
     def coopetitivo(self):
         
@@ -151,8 +206,8 @@ class SIS_interfaz(tk.Tk):
         else:    
             self.matriz = M_conex.loc[self.rows, self.rows]
         #Valores a buscar en la matriz
-        self.tiempo = 0.1
-        self.duracion = 300
+        self.tiempo = 0.01
+        self.duracion = 30
         
         if self.var.get() == "Manual":
             self.cont3 = tk.Frame(self, bg="azure")
@@ -188,7 +243,7 @@ class SIS_interfaz(tk.Tk):
         mat_power = Sc.mat_power(1,self.matriz)
         self.mat_power = mat_power
         self.poblacion = (mat_power.loc[self.choice.get(),
-                                   self.rows]!=0).sum().sum() + 1
+                                   self.rows]!=0).sum().sum() 
         
         if self.coop1 != "Cooperativo":
             
@@ -307,6 +362,7 @@ class SIS_interfaz(tk.Tk):
         #Escoja dentro de las filas,
         #un valor diferente al escogido en choice de forma aleatoria
         #Para que la competicion sea lo mas justa
+        
         b = self.b.get()
         self.rows3 = copy.deepcopy(self.rows)
         self.rows3.pop(self.rows.index(b))
@@ -316,15 +372,20 @@ class SIS_interfaz(tk.Tk):
         for k in self.cti:
             
             self.Matriz_ = self.matriz
+            mat_p = Sc.make_prob(self.matriz)
+            mat_p = 1/mat_p
+            mat_p.to_csv("out/mat_p.csv", sep=";")
             
-            for i in self.rows3:
+            for i in [self.choice.get()]:
 
-                cof = M_caracteristicas.loc[self.rows, self.cti[0]]
+                cof = M_caracteristicas.loc[self.rows, k]
 
                 self.comp = Sc.competencia(i,
-                    self.rows, b, self.matriz,
+                    self.rows, b, mat_p,
                     cof)
-
+                
+                print(f"Nodos previos desde {i} hasta {b}: ",Sc.dijkstra(mat_p.to_dict(), (i,), (b,)))
+                
                 self.EX_FA.update({f"{k} {i}":self.comp[0:2]})
 
                 self.y0 = []
@@ -357,14 +418,14 @@ class SIS_interfaz(tk.Tk):
         return(self.graph())
         
     def coopetitivo_(self):
-
+        
         self.EX_FA = {}
         b = self.b.get()
         self.rows3 = copy.deepcopy(self.rows)
         self.rows3.pop(self.rows.index(b))
         self.EX_FA = {}
         self.sis = {}
-
+      
         for i in self.cti:
 
             cof = M_caracteristicas.loc[self.rows, i]
@@ -380,16 +441,22 @@ class SIS_interfaz(tk.Tk):
             #print(Matriz[0])
 
             mat_p = Sc.make_prob(Matriz[0])
+            mat_p = 1/mat_p
             
             #Aqui hacen cooperacion por ende en este punto
             #Se deben de simular capacidades
             cof4 = cof
-            for j in self.rows3:
+            
+            print(cof.loc[self.choice.get(), :])
+            
+            for j in [self.choice.get()]:
                 
                 cof3 = M_caracteristicas.loc[j, i]
                 cof4 = Sc.incremento(cof3, cof4)
 
-            for j in self.rows3:
+            print(cof4.loc[self.choice.get(), :])
+
+            for j in [self.choice.get()]:
                 
                 self.poblacion = (self.mat_power.loc[j,
                                    self.rows]!=0).sum().sum() + 1
@@ -398,9 +465,10 @@ class SIS_interfaz(tk.Tk):
                 
                 self.comp = Sc.competencia(j, #Falla el sistema al buscar algunos indices / Solucionando
                         self.rows, b, mat_p, cof4)
-
+                
+                print(f"Nodos previos desde {j} hasta {b}: ",Sc.dijkstra(mat_p.to_dict(), (j,), (b,)))
                 self.EX_FA.update({f"{i} {j}": self.comp[0:2]})
-
+                
                 self.y0 = []
                 self.y1 = []
                 self.t = []
@@ -446,16 +514,24 @@ class SIS_interfaz(tk.Tk):
             self.si.set_xlabel("Tiempo")
             self.si.set_ylabel("Densidad de la problación")
             a = self.coop1 != "Cooperativo"
-            b = True #self.choice.get() in i
+            b = self.choice.get() in i
             
             if (a,b) == (True, True):
                 self.si.set_title(f"{self.b.get()}")
                 self.si.plot(self.t, (self.sis[i][0]/self.poblacion),
-                         label = i + " " + r"$\beta = $"+ f"{np.round(self.EX_FA[i][0],3)}")
+                         label = i + " Infectados"
+                         )
+                self.si.plot(self.t, (self.sis[i][1]/self.poblacion),
+                         label = i + " Susceptibles"
+                         )
+                print(np.round(self.EX_FA[i][0],3))
             elif a == False:    
                 self.si.set_title(f"{self.choice.get()}")
                 self.si.plot(self.t, (self.sis[i][0]/self.poblacion),
-                         label = i + " " + r"$\beta = $"+ f"{np.round(self.EX_FA[i][0],3)}")
+                         label = i + " Infectados")
+                self.si.plot(self.t, (self.sis[i][1]/self.poblacion),
+                         label = i + " Susceptibles")
+                print(np.round(self.EX_FA[i][0],3))
         
         self.si.legend()
             
@@ -499,6 +575,7 @@ class SIS_interfaz(tk.Tk):
 if __name__ == "__main__":
     
     import pandas as pd
+    import heapq
     pd.set_option("display.max_rows", 5)
     pd.set_option("display.max_columns", 5)
     import numpy as np
@@ -547,19 +624,19 @@ if __name__ == "__main__":
 
     M_conex = Sc.corrector(M_conex)
     
-    #M_conex = M_conex.loc[M_conex.index != ('CIAT',),
-        #                  M_conex.columns != ('CIAT',)]
-    #M_conex = M_conex.loc[M_conex.index != ('UNIVALLE',),
-       #                   M_conex.columns != ('UNIVALLE',)]
+   # M_conex = M_conex.loc[M_conex.index != ('CIAT',),
+    #                      M_conex.columns != ('CIAT',)]
+   # M_conex = M_conex.loc[M_conex.index != ('UNIVALLE',),
+     #                     M_conex.columns != ('UNIVALLE',)]
     #M_conex = M_conex.loc[M_conex.index != ('UNAL',),
       #                    M_conex.columns != ('UNAL',)]
     
-    #M_caracteristicas = M_caracteristicas.loc[M_caracteristicas.index != ('CIAT',),
-     #                     M_caracteristicas.columns != ('CIAT',)]
-    #M_caracteristicas = M_caracteristicas.loc[M_caracteristicas.index != ('UNIVALLE',),
-     #                     M_caracteristicas.columns != ('CIAT',)]
-    #M_caracteristicas = M_caracteristicas.loc[M_caracteristicas.index != ('UNAL',),
-      #                    M_caracteristicas.columns != ('CIAT',)]
+   # M_caracteristicas = M_caracteristicas.loc[M_caracteristicas.index != ('CIAT',),
+    #                      M_caracteristicas.columns != ('CIAT',)]
+   # M_caracteristicas = M_caracteristicas.loc[M_caracteristicas.index != ('UNIVALLE',),
+    #                      M_caracteristicas.columns != ('CIAT',)]
+   # M_caracteristicas = M_caracteristicas.loc[M_caracteristicas.index != ('UNAL',),
+    #                      M_caracteristicas.columns != ('CIAT',)]
 ################## Coeficientes
 
     coeficientes = M_caracteristicas[M_caracteristicas.columns[-4:]]
