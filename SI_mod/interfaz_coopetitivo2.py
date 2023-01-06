@@ -378,6 +378,7 @@ class SIS_interfaz(tk.Tk):
             mat_p.to_csv("out/mat_p.csv", sep=";")
             
             for i in [self.choice.get()]:
+            #self.rows3:
 
                 cof = M_caracteristicas.loc[self.rows, k]
 
@@ -461,6 +462,7 @@ class SIS_interfaz(tk.Tk):
             print(cof4.loc[self.choice.get(), :])
 
             for j in [self.choice.get()]:
+            #self.rows3:
                 
                 self.poblacion = (self.mat_power.loc[j,
                                    self.rows]!=0).sum().sum() + 1
@@ -515,6 +517,7 @@ class SIS_interfaz(tk.Tk):
         self.fig = mtp.figure.Figure()
         self.si = self.fig.add_subplot(111)
 
+        #c = 0
         for i in self.sis:
             
             #longitud = len(self.matriz.to_numpy()[0])
@@ -526,12 +529,14 @@ class SIS_interfaz(tk.Tk):
             
             if (a,b) == (True, True):
                 self.si.set_title(f"{self.b.get()}")
-                self.si.plot(self.t, (self.sis[i][0]/self.poblacion),
+                self.si.plot(self.t, (self.sis[i][0]/(self.poblacion)),
+                                                      #*len(self.rows3))),
                          label = i + " Infectados"
                          )
                 self.si.plot(self.t, (self.sis[i][1]/self.poblacion),
                          label = i + " Susceptibles"
-                         )
+                        )
+                #c += 1
                 print(np.round(self.EX_FA[i][0],3))
             elif a == False:    
                 self.si.set_title(f"{self.choice.get()}")
@@ -540,8 +545,9 @@ class SIS_interfaz(tk.Tk):
                 self.si.plot(self.t, (self.sis[i][1]/self.poblacion),
                          label = i + " Susceptibles")
                 print(np.round(self.EX_FA[i][0],3))
-        
+        #self.si.set_xlim(0,50)
         self.si.legend()
+            #prop={"size":8})
             
         canvas0 = FigureCanvasTkAgg(self.fig, master = self.container2)
         toolbar = NavigationToolbar2Tk(canvas0, self.container2)

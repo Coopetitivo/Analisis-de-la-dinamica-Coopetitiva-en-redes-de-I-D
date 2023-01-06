@@ -831,19 +831,20 @@ def competencia(Ai, A_k, B, M, M_caracteristicas):
     
     del D_A_i[B] # Excluimos B pues, el no compite sobre si mismo
     D_AI = D_A_i[Ai]
+    del D_A_i[Ai]
     inf = {}
     
     sup = {}
     
     for i in D_A_i:
         
-        if D_A_i[i] < D_A_i[Ai]: #Posible correccion borrar el comentario anterior hasta aqui D_AI
+        if D_A_i[i] < D_AI: #Posible correccion borrar el comentario anterior hasta aqui D_AI
             
-            inf.update({i : D_A_i[Ai]-D_A_i[i]})
+            inf.update({i : D_AI-D_A_i[i]})
             
         else:
             
-            sup.update({i : D_A_i[i]-D_A_i[Ai]})
+            sup.update({i : D_A_i[i]-D_AI})
             
     prob_com_debil = len(inf)/len(D_A_i) # Si mi forma de llegar 
     #Al recurso es mas larga que la de la competencia, entonces
@@ -893,6 +894,7 @@ def new_conex(M_conex):
         
         Matriz2.loc[i, :] = np.random.binomial(1, 0.5, len(M_conex))
     np.random.seed(None)
+    Matriz2 = corrector(Matriz2)
     return(Matriz2)
         
         
