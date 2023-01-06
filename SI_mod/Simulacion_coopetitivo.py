@@ -443,7 +443,7 @@ def diferencias(Matriz, coeficientes, pesos_fila):
     #Divida la longitud del vector sup sobre el peso_fila i y guardelo en prob_F
 
     Matriz2 = copy.deepcopy(Matriz) #Copie la matriz
-
+    Matriz3 = {}
     inf = {} #Cree un diccionario de nombre inf
     sup = {} #Cree un diccionario de nombre sup
     prob_E = {} #Cree un diccionario de probabilidad de exito
@@ -499,7 +499,8 @@ def diferencias(Matriz, coeficientes, pesos_fila):
     for rows in Matriz.index: #Para toda fila en los indices de la matriz haga
         
         rows = rows[0]
-      
+        Matriz3.update({rows: {"Cooperacion fuerte": inf[rows],
+                               "Cooperacion debil" : sup[rows]} })
         for cols in Matriz.columns: #Para toda columna en los indices de la matriz haga
 
             cols = cols[0]
@@ -529,7 +530,7 @@ def diferencias(Matriz, coeficientes, pesos_fila):
                         Matriz2.loc[rows,cols] = a*prob_F[rows]/peso_F[rows] #Guardelo en la posición i,j de la matriz
     
             
-    return([Matriz2, prob_E, prob_F, inf, sup])
+    return([Matriz2, prob_E, prob_F, inf, sup, Matriz3])
 
 def diferencias2(Matriz, coeficientes, pesos_fila):
     
@@ -829,14 +830,14 @@ def competencia(Ai, A_k, B, M, M_caracteristicas):
         
     
     del D_A_i[B] # Excluimos B pues, el no compite sobre si mismo
-    
+    D_AI = D_A_i[Ai]
     inf = {}
     
     sup = {}
     
     for i in D_A_i:
         
-        if D_A_i[i] < D_A_i[Ai]:
+        if D_A_i[i] < D_A_i[Ai]: #Posible correccion borrar el comentario anterior hasta aqui D_AI
             
             inf.update({i : D_A_i[Ai]-D_A_i[i]})
             

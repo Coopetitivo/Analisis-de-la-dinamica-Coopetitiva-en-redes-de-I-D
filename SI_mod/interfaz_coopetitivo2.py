@@ -305,6 +305,7 @@ class SIS_interfaz(tk.Tk):
                                   Sc.int_M_C(self.y1)]})
             #Aqui termina la cooperacion, por ende, aqui se simula
             #Las capacidades
+            print(Matriz[-1][self.choice.get()])
             print(cof)
             cat = Sc.incremento(cof2, cof)
             print(cat)
@@ -384,6 +385,9 @@ class SIS_interfaz(tk.Tk):
                     self.rows, b, mat_p,
                     cof)
                 
+                print("Competencia Fuerte: ", self.comp[-1],
+                      "\n", "Competencia Debil: ", self.comp[-2])
+                
                 print(f"Nodos previos desde {i} hasta {b}: ",Sc.dijkstra(mat_p.to_dict(), (i,), (b,)))
                 
                 self.EX_FA.update({f"{k} {i}":self.comp[0:2]})
@@ -439,7 +443,7 @@ class SIS_interfaz(tk.Tk):
              #       cof, self.matriz.sum())
             
             #print(Matriz[0])
-
+            print(Matriz[-1][self.choice.get()])
             mat_p = Sc.make_prob(Matriz[0])
             mat_p = 1/mat_p
             
@@ -465,6 +469,10 @@ class SIS_interfaz(tk.Tk):
                 
                 self.comp = Sc.competencia(j, #Falla el sistema al buscar algunos indices / Solucionando
                         self.rows, b, mat_p, cof4)
+                
+                print("Competencia Fuerte: ", self.comp[-1],
+                      "\n", "Competencia Debil: ", self.comp[-2])
+                
                 
                 print(f"Nodos previos desde {j} hasta {b}: ",Sc.dijkstra(mat_p.to_dict(), (j,), (b,)))
                 self.EX_FA.update({f"{i} {j}": self.comp[0:2]})
