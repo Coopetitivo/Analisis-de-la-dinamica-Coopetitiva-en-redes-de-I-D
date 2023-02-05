@@ -43,8 +43,10 @@ def make_jaccard(Matriz, coeficientes):
     matriz = copy.deepcopy(Matriz)
 
     for rows in Matriz.index:
-
-        a = coeficientes.transpose()*Matriz.loc[rows, :]
+        
+        
+        
+        a = coeficientes.transpose()*Matriz.loc[rows, :]/(coeficientes.loc[rows, :].to_numpy()[0])
         #print(a)
         #a.index = rows
 
@@ -86,7 +88,7 @@ def graph(conexiones,clase,coeficientes=[]):
     
     colortipo = []
     
-    colory = ["tomato", "mediumseagreen", "deepskyblue", "coral", "teal"]
+    colory = ["tomato", "mediumseagreen", "deepskyblue", "coral", "purple"]
 
     for i in nexos:
         
@@ -466,22 +468,18 @@ def diferencias(Matriz, coeficientes, pesos_fila):
             c = Matriz.loc[rows,cols].to_numpy()[0][0]
 
             if c != 0: #Si la posición i,j es distinta de 0 haga
-                
-                d = coeficientes.loc[rows, :].to_numpy()[0][0]
 
-                if c < d: #Si la posición i,j es menor o igual a un coeficiente realice
+                if c < 1: #Si la posición i,j es menor o igual a un coeficiente realice
                 
-                    a = coeficientes.loc[rows,:].to_numpy()[0][0] - Matriz.loc[rows,cols] #Restar el JA-Jij
-                    a = a.to_numpy()[0]
+                    a = 1/c 
                     Matriz2.loc[rows,cols] = a #Guardelo en la posición i,j de la matriz
-                    inf[rows].update({cols : a}) #Guardelo en el diccionario
+                    inf[rows].update({cols : 1/a}) #Guardelo en el diccionario
 
-                elif c >= d: #Si la posición i,j es mayor a un coeficiente realice
+                elif c >= 1: #Si la posición i,j es mayor a un coeficiente realice
                     
-                    a = Matriz.loc[rows,cols] - coeficientes.loc[rows,:].to_numpy()[0][0] #Restar el Jij-JA
-                    a = a.to_numpy()[0]
+                    a = 1/c
                     Matriz2.loc[rows,cols] = a #Guardelo en la posición i,j de la matriz
-                    sup[rows].update({cols : a}) #Guardelo en el diccionario
+                    sup[rows].update({cols : 1/a}) #Guardelo en el diccionario
             
             else: 
                 1+1
@@ -501,35 +499,7 @@ def diferencias(Matriz, coeficientes, pesos_fila):
         rows = rows[0]
         Matriz3.update({rows: {"Cooperacion fuerte": inf[rows],
                                "Cooperacion debil" : sup[rows]} })
-        for cols in Matriz.columns: #Para toda columna en los indices de la matriz haga
 
-            cols = cols[0]
-            
-            c = Matriz.loc[rows,cols].to_numpy()[0][0]
-
-            if c != 0: #Si la posición i,j es distinta de 0 haga
-                
-                d = coeficientes.loc[rows, :].to_numpy()[0][0]
-
-                if c < d: #Si la posición i,j es menor o igual a un coeficiente realice
-                
-                    a = coeficientes.loc[rows,:].to_numpy()[0][0] - Matriz.loc[rows,cols] #Restar el JA-Jij
-                    a = a.to_numpy()[0][0]
-                    if peso_E[rows] == 0:
-                        Matriz2.loc[rows,cols]=prob_E[rows]
-                    else:
-                        Matriz2.loc[rows,cols] = a*prob_E[rows]/peso_E[rows] #Guardelo en la posición i,j de la matriz
-                        
-                elif c >= d: #Si la posición i,j es mayor a un coeficiente realice
-                    
-                    a = Matriz.loc[rows,cols] - coeficientes.loc[rows,:].to_numpy()[0][0] #Restar el Jij-JA
-                    a = a.to_numpy()[0][0]
-                    if peso_F[rows] == 0:
-                        Matriz2.loc[rows,cols]=prob_F[rows]
-                    else:
-                        Matriz2.loc[rows,cols] = a*prob_F[rows]/peso_F[rows] #Guardelo en la posición i,j de la matriz
-    
-            
     return([Matriz2, prob_E, prob_F, inf, sup, Matriz3])
 
 def diferencias2(Matriz, coeficientes, pesos_fila):
@@ -766,13 +736,13 @@ def dijkstra(graph, start, end):
         if node == end:
             break
         # Si no hemos visitado aún el nodo
-        if distance == distances[node]:
+        if distance == distances[node] :
             # Iteramos sobre sus vecinos
             for neighbor, cost in graph[node].items():
                 # Calculamos la nueva distancia al vecino
                 new_distance = distance + cost
                 # Si la nueva distancia es menor que la distancia actual del vecino
-                if new_distance < distances[neighbor]:
+                if new_distance < distances[neighbor] and cost != 0:
                     # Actualizamos la distancia del vecino
                     distances[neighbor] = new_distance
                     # Establecemos el nodo actual como el nodo previo del vecino
@@ -800,7 +770,7 @@ def dijkstra(graph, start, end):
 
 #Por ultimo el ambito competitivo
 
-def competencia(Ai, A_k, B, M, M_caracteristicas):
+def competencia(Ai, A_k, B, M, M_caracteristicas,m):
     
     #A_k es el vector de competidores
     #A_i es el competidor a seguir
@@ -824,40 +794,75 @@ def competencia(Ai, A_k, B, M, M_caracteristicas):
         
         G.index = A_k
         
-        D_A_ij = G.loc[B, :].to_numpy()[0] * (1/M_caracteristicas.loc[i, :].to_numpy()[0])
+        D_A_ij = G.loc[B, :].to_numpy()[0] 
       
         D_A_i.update({i:D_A_ij})
-        
+      
+    D_A_i_ = copy.deepcopy(D_A_i)     
     
     del D_A_i[B] # Excluimos B pues, el no compite sobre si mismo
+   
     D_AI = D_A_i[Ai]
+   
     del D_A_i[Ai]
+    
+    dex = A_k.index(Ai)
+    
     inf = {}
     
     sup = {}
     
     for i in D_A_i:
+        dex2 = A_k.index(i)
         
-        if D_A_i[i] < D_AI: #Posible correccion borrar el comentario anterior hasta aqui D_AI
+        if D_AI/D_A_i[i] >= 1 and M[dex][dex2] != 0: #Posible correccion borrar el comentario anterior hasta aqui D_AI
             
-            inf.update({i : D_AI-D_A_i[i]})
+            inf.update({i : D_AI/D_A_i[i]})
             
+        elif D_AI/D_A_i[i] < 1 and M[dex][dex2] != 0:
+            
+            sup.update({i : D_AI/D_A_i[i]})
+            
+        else: 
+            1+1
+    
+    m = m.transpose()
+    
+    for j in A_k:
+        
+        if j == B:
+            
+            m.loc[j,:] = m.loc[j,:]*(np.array(list(D_A_i_.values())))
+        
         else:
             
-            sup.update({i : D_A_i[i]-D_AI})
-            
-    prob_com_debil = len(inf)/len(D_A_i) # Si mi forma de llegar 
+            m.loc[j, :] = (m.loc[j,:].to_numpy().ravel())*((np.array(list(D_A_i_.values()))/D_A_i_[j]).transpose())
+    
+    print("Dijkstra: ", D_A_i_)
+    
+    m = m.transpose()
+    
+    f = copy.deepcopy(m.loc[B, :])
+    g = copy.deepcopy(m.loc[:, B])
+   
+   
+    m.loc[:, B] = f.to_numpy().ravel() #Correccion de conexiones
+    m.loc[B, :] = g.to_numpy().ravel() #Correccion de conexiones
+    
+    m = m.transpose()
+    
+    prob_com_debil = len(inf)/(len(sup)+len(inf)) # Si mi forma de llegar 
     #Al recurso es mas larga que la de la competencia, entonces
     #Sere un competidor debil
     
-    prob_com_fuerte = len(sup)/len(D_A_i)# Caso contrario,
+    prob_com_fuerte = len(sup)/(len(sup)+len(inf))# Caso contrario,
     #Tendre una ventaja al competir, esta ventanja se puede mejorar
     #Por medio de inyectar capacidades
     
     #En este modelo, se puede ver tambien la necesidad de algunas,
     #Conexiones, como Min_ciencias, Lo cual asegure mayor, estabilidad
     
-    return ([prob_com_fuerte, prob_com_debil, inf, sup])
+    return ([prob_com_fuerte, prob_com_debil,m, inf, sup, D_A_i_])
             
     
         
@@ -929,6 +934,36 @@ def incremento(CTI, CTIS):
             # en las capacidades tecnologicas
     np.random.seed(None)
     return (CTJ)
+
+def coopettivo(sup_comp, inf_coop, sup_coop, inf_comp):
+    
+    exi = {}
+    fra = {}
+    
+    llaves = np.unique(list(sup_comp.keys())+list(inf_comp.keys()))
+    
+    for i in llaves:
+        
+        if (i in inf_coop) and (i in sup_comp):
+            
+            exi.update({i:[inf_coop[i], sup_comp[i]]})
+            
+        else:
+            
+            try:
+                fra.update({i:[inf_coop[i], inf_comp[i]]})
+            except:
+                try:
+                    fra.update({i:[sup_coop[i], sup_comp[i]]}) 
+                except:
+                    fra.update({i:[sup_coop[i], inf_comp[i]]}) 
+    
+    prob_E = len(exi)/(len(fra)+len(exi)) 
+    prob_F = len(fra)/(len(fra)+len(exi))
+    
+    return([prob_E, prob_F, exi, fra])
+    
+    
         
         
         

@@ -266,8 +266,21 @@ class SIS_interfaz(tk.Tk):
             cof2 = M_caracteristicas.loc[self.choice.get(), i]
             Matriz = Sc.diferencias(Sc.make_jaccard(self.matriz,
                 cof), cof, self.matriz.sum())
-            
+            JC = Sc.make_jaccard(self.matriz,
+                cof)
+            JC.to_csv(f"out/Matriz A {i}.csv", sep=";")
             self.Matriz_ = Matriz[0]
+
+            ex_fa = {"Beta/Valor esperado":Matriz[1] 
+                     ,"Gamma/Varianza:":Matriz[2]}
+            
+            ex_fa = pd.DataFrame(ex_fa)
+            
+            ex_fa.iloc[:,1] = ex_fa.iloc[:,1]*ex_fa.iloc[:,0]
+            
+            ex_fa.loc[self.choice.get(),:].to_csv(f"out/EyV col {i}.csv", sep=";")
+            
+           # print(ex_fa)
 
             ex_fa = [Matriz[1][self.choice.get()],
                     Matriz[2][self.choice.get()]]
@@ -283,13 +296,19 @@ class SIS_interfaz(tk.Tk):
                     1-beta, self.poblacion,
                     self.tiempo,
                     self.duracion)
+            
+            print(self.matriz.loc[self.choice.get(),:].sum().sum()*2,
+                  self.poblacion)
 
             self.y0 = []
             self.y1 = []
             self.t = []
 
-            mat_p = Sc.make_prob(Matriz[0])
-            mat_p.to_csv(f"out/Matrizt {i}.csv", sep=";")
+            Matriz[0].to_csv(f"out/Matriz_oportunidad cooperativo {i}.csv",
+                             sep=";")
+
+            mat_p = np.round(Sc.make_prob(Matriz[0]),4)
+            mat_p.to_csv(f"out/Matrizt cooperativo {i}.csv", sep=";")
             Sc.mat_power(10, mat_p).to_csv(f"out/tpasos {i}.csv", sep=';')
 
             for j in range(30):
@@ -305,10 +324,26 @@ class SIS_interfaz(tk.Tk):
                                   Sc.int_M_C(self.y1)]})
             #Aqui termina la cooperacion, por ende, aqui se simula
             #Las capacidades
-            print(Matriz[-1][self.choice.get()])
-            print(cof)
-            cat = Sc.incremento(cof2, cof)
-            print(cat)
+            t = Matriz[-3:-1]
+            inf=t[0][self.choice.get()]
+            sup=t[1][self.choice.get()]
+            pd.set_option("display.max_rows", None)
+            dinf= pd.DataFrame(list(inf.values()),
+                               index=list(inf.keys()),
+                               columns=["Cooperación fuerte"])
+            dsup= pd.DataFrame(list(sup.values()),
+                               index=list(sup.keys()),
+                               columns=["Cooperación debil"])
+            
+            print(dinf.sort_values(by="Cooperación fuerte"), "\n",
+                  dsup.sort_values(by="Cooperación debil"))
+            
+            dinf.to_csv(f"out/Cooperacion fuerte {i}.csv",sep=";")
+            dsup.to_csv(f"out/Cooperacion debil {i}.csv",sep=";")
+            
+            #print(cof)
+            #cat = Sc.incremento(cof2, cof)
+           # print(cat)
                 
         return(self.graph())
             
@@ -372,11 +407,12 @@ class SIS_interfaz(tk.Tk):
         
         for k in self.cti:
             
-            self.Matriz_ = self.matriz
-            mat_p = Sc.make_prob(self.matriz)
-            mat_p = 1/mat_p
-            mat_p.to_csv("out/mat_p.csv", sep=";")
-            
+            self.Matriz_ = Sc.make_jaccard(self.matriz, 1/(M_caracteristicas.loc[self.rows, k]))
+            mat_p = Sc.make_prob(self.Matriz_)
+            self.Matriz_ = Sc.make_jaccard(self.matriz, (M_caracteristicas.loc[self.rows, k]))
+           # mat_p.to_csv("out/mat_p.csv", sep=";")
+            mat_p = self.Matriz_
+           
             for i in [self.choice.get()]:
             #self.rows3:
 
@@ -384,10 +420,40 @@ class SIS_interfaz(tk.Tk):
 
                 self.comp = Sc.competencia(i,
                     self.rows, b, mat_p,
-                    cof)
+                    cof, self.matriz)
                 
-                print("Competencia Fuerte: ", self.comp[-1],
-                      "\n", "Competencia Debil: ", self.comp[-2])
+                ex_fa = {self.choice.get():{"Beta/Valor esperado":self.comp[0]
+                     ,"Gamma/Varianza:":self.comp[1]}}
+            
+                ex_fa = pd.DataFrame(ex_fa)
+                
+                ex_fa.iloc[1,:] = ex_fa.iloc[1,:]*ex_fa.iloc[0,:]
+            
+                ex_fa.to_csv(f"out/EyV com {k}.csv", sep=";")
+                
+                #print(ex_fa)
+                
+                t = self.comp[-3:-1]
+                sup = t[1]
+                inf = t[0]
+                pd.set_option("display.max_rows", None)
+                dinf= pd.DataFrame(list(inf.values()),
+                               index=list(inf.keys()),
+                               columns=["Competición debil"])
+                dsup= pd.DataFrame(list(sup.values()),
+                               index=list(sup.keys()),
+                               columns=["Competición fuerte"])
+                
+                print(dinf.sort_values(by="Competición debil"), "\n",
+                  dsup.sort_values(by="Competición fuerte"))
+                
+                dinf.to_csv(f"out/Competicion debil {k}.csv",sep=";")
+                dsup.to_csv(f"out/Competicion fuerte {k}.csv",sep=";")
+                
+                #print("Competencia Fuerte: ", self.comp[-2],
+                 #     "\n", "Competencia Debil: ", self.comp[-3])
+                
+                print("Las distancias de los nodos son: ", self.comp[-1])
                 
                 print(f"Nodos previos desde {i} hasta {b}: ",Sc.dijkstra(mat_p.to_dict(), (i,), (b,)))
                 
@@ -396,6 +462,19 @@ class SIS_interfaz(tk.Tk):
                 self.y0 = []
                 self.y1 = []
                 self.t = []
+                
+                
+                y = self.comp[2]
+                
+                y.loc[b,b] = 1
+                
+                y.to_csv(f"out/Matriz_oportunidad competencia {k}.csv",
+                         sep=";")
+                
+               # print(y)
+                
+                p = np.round(Sc.make_prob(y),4)
+                p.to_csv(f"out/Matrizt competitivo {k}.csv", sep=";")
 
                 for j in range(30):
 
@@ -437,29 +516,29 @@ class SIS_interfaz(tk.Tk):
             
             Matriz = Sc.diferencias(Sc.make_jaccard(self.matriz, cof),
                     cof, self.matriz.sum())
-            self.Matriz_ = Matriz[0]
+            self.Matriz_ = Matriz[0] #Esta es la matriz, la cual es necesaria para el competitivo
             #print(Matriz[0])
-
+            inf = Matriz[-3]
+            sup = Matriz[-2]
             #Matriz = Sc.diferencias2(Sc.make_jaccard(self.matriz, cof),
              #       cof, self.matriz.sum())
             
             #print(Matriz[0])
-            print(Matriz[-1][self.choice.get()])
+           # print(Matriz[-1][self.choice.get()])
             mat_p = Sc.make_prob(Matriz[0])
-            mat_p = 1/mat_p
-            
+            mat_p = Sc.make_jaccard(self.matriz, cof)
             #Aqui hacen cooperacion por ende en este punto
             #Se deben de simular capacidades
             cof4 = cof
             
-            print(cof.loc[self.choice.get(), :])
+            #print(cof.loc[self.choice.get(), :])
             
             for j in [self.choice.get()]:
                 
                 cof3 = M_caracteristicas.loc[j, i]
                 cof4 = Sc.incremento(cof3, cof4)
 
-            print(cof4.loc[self.choice.get(), :])
+           # print(cof4.loc[self.choice.get(), :])
 
             for j in [self.choice.get()]:
             #self.rows3:
@@ -470,14 +549,63 @@ class SIS_interfaz(tk.Tk):
                 #cof2 = M_caracteristicas.loc[self.rows, i]
                 
                 self.comp = Sc.competencia(j, #Falla el sistema al buscar algunos indices / Solucionando
-                        self.rows, b, mat_p, cof4)
+                        self.rows, b, mat_p, cof, self.matriz)
+                #print(inf[self.choice.get()])
+                #print(self.comp[-2])
                 
-                print("Competencia Fuerte: ", self.comp[-1],
-                      "\n", "Competencia Debil: ", self.comp[-2])
+                #-2 competencia -3 cooperacion[self.choice]
+                EX_FA = Sc.coopettivo(self.comp[-2],
+                                      inf[self.choice.get()],
+                                      sup[self.choice.get()],
+                                      self.comp[-3])
+                ex_fa = {self.choice.get():{"Beta/Valor esperado":EX_FA[0]
+                     ,"Gamma/Varianza:":EX_FA[1]}}
+            
+                ex_fa = pd.DataFrame(ex_fa)
+                
+                ex_fa.iloc[1,:] = ex_fa.iloc[1,:]*ex_fa.iloc[0,:]
+            
+                ex_fa.to_csv(f"out/EyV Coo {i}.csv", sep=";")
+                #print(ex_fa)
+                
+                y = self.comp[2]
+                
+                x = Sc.make_jaccard(self.matriz, 1/cof)
+                
+                z = x*y
+                
+                z.loc[b,b]=1
+                
+                z.to_csv(f"out/Matriz_oportunidad coopetitivo {i}.csv", sep=";")
+                
+                p = np.round(Sc.make_prob(z),4)
+                p.to_csv(f"out/Matrizt coopetitivo {i}.csv", sep=";")
+                
+                print("Las distancias de los nodos son: ", self.comp[-1])
+                
+                pd.set_option("display.max_rows", None)
+                
+                t = EX_FA[-2:]
+                
+                fuer = t[0]
+                debi = t[1]
+                
+                dfuer = pd.DataFrame(list(fuer.values()),
+                                     index=list(fuer.keys()),
+                                     columns=["Cooperación", "Competición"])
+                ddebi = pd.DataFrame(list(debi.values()),
+                                     index=list(debi.keys()),
+                                     columns=["Cooperación", "Competición"])
+                
+                print("Coopeticion fuerte: ","\n", dfuer, "\n", "Coopeticion debil: ", "\n",ddebi)
                 
                 
                 print(f"Nodos previos desde {j} hasta {b}: ",Sc.dijkstra(mat_p.to_dict(), (j,), (b,)))
-                self.EX_FA.update({f"{i} {j}": self.comp[0:2]})
+                self.EX_FA.update({f"{i} {j}": EX_FA[0:2]})
+                
+                dfuer.to_csv(f"out/Coopeticion fuerte {i}.csv",sep=";")
+                ddebi.to_csv(f"out/Coopeticion debil {i}.csv", sep=";")
+                
                 
                 self.y0 = []
                 self.y1 = []
@@ -523,12 +651,12 @@ class SIS_interfaz(tk.Tk):
             #longitud = len(self.matriz.to_numpy()[0])
             
             self.si.set_xlabel("Tiempo")
-            self.si.set_ylabel("Densidad de la problación")
+            self.si.set_ylabel("Densidad de la población")
             a = self.coop1 != "Cooperativo"
             b = self.choice.get() in i
             
             if (a,b) == (True, True):
-                self.si.set_title(f"{self.b.get()}")
+                self.si.set_title("Recurso "+f"{self.b.get()}")
                 self.si.plot(self.t, (self.sis[i][0]/(self.poblacion)),
                                                       #*len(self.rows3))),
                          label = i + " Infectados"
@@ -563,7 +691,7 @@ class SIS_interfaz(tk.Tk):
         self.fig2 = mtp.figure.Figure()
         self.gra = self.fig2.add_subplot(111)
     
-        Sc.graph(np.round(self.Matriz_.loc[self.rows, self.rows],3),
+        Sc.graph(np.round(self.matriz.loc[self.rows, self.rows],3),
                  M_caracteristicas.iloc[:,1])
         plt.savefig("out/"+"Grafo de actores involucrados"+".png", bbox_inches="tight", dpi=1200)
         plt.close()
@@ -651,6 +779,9 @@ if __name__ == "__main__":
     #                      M_caracteristicas.columns != ('CIAT',)]
    # M_caracteristicas = M_caracteristicas.loc[M_caracteristicas.index != ('UNAL',),
     #                      M_caracteristicas.columns != ('CIAT',)]
+    
+    #M_conex = M_conex.loc[["UNIVALLE", "CIAT", "ITM", "UNAL"], ["UNIVALLE", "CIAT", "ITM", "UNAL"]]
+    #M_caracteristicas = M_caracteristicas.loc[["UNIVALLE", "CIAT", "ITM", "UNAL"],:]
 ################## Coeficientes
 
     coeficientes = M_caracteristicas[M_caracteristicas.columns[-4:]]
