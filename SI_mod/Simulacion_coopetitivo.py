@@ -756,7 +756,8 @@ def dijkstra(graph, start, end):
     # Mientras tengamos un nodo previo
     while node is not None:
         # Añadimos el nodo a la lista
-        path.append(node)
+        
+        path.append(node[0][0:])
         # Actualizamos el nodo actual con su nodo previo
         node = prev[node]
     # Devolvemos la lista invertida (del nodo final al nodo inicial)
