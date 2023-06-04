@@ -108,15 +108,7 @@ class SIS_interfaz(tk.Tk):
         
         self.coop1 = self.coop1.get()#Rescato la variable antes de que su contenedor sea destruido
         self.sim.set(self.sims.get())
-        #no es necesario crear tres funciones para cumplir lo mismo
-        #por ende, lo unico que necesitamos es una boton especificio
-        #que ayude a maximizar las funcionales
-        #Por ende, lo unico que nos termina por interezar es el nodo
-        #de infeccion que se soluciona con poner despues de pasar un
-        #nodo B que nos ayude
-
-        ##completar
-
+       
         #Crear un contenedor para tres opciones
 
         self.cont = tk.Frame(self, bg="azure")
@@ -838,7 +830,6 @@ if __name__ == "__main__":
     root = SIS_interfaz()
     root.mainloop()
     
-    #Existe alguna forma de cambiar alguno de los datos sin alterar
-    #La interfaz?
+   
 
 
