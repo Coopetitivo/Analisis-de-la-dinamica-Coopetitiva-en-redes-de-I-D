@@ -201,12 +201,11 @@ def markov(init, matriz, t, condicion=0 ,estados=[]):
 def DTMC_SIS(beta, gamma, poblacion, c_tiempo, duracion): #Markov_Chain_epidemic_models_and_Parameter_Estimation
 
     #Los infectados puede ser un vector donde se almacene un 
-    #vector de valores unicos
+    #vector de valores únicos
     #Las reeinfecciones no se cuentan
-    #Entonces podemos usar el mismo modelo
+    #Entonces uso el mismo modelo
     #donde I sea el vector de infectados
     #S el vector de entidades susceptibles
-    #El ultimo contagia, podrías cambiar el beta y gamma posiblemente
     dt = int(duracion/c_tiempo)
     M_T = np.matrix(np.zeros((dt,dt)))
     M_T[0,0]=1
@@ -222,7 +221,7 @@ def DTMC_SIS(beta, gamma, poblacion, c_tiempo, duracion): #Markov_Chain_epidemic
     S[0]=poblacion-I[0]
     P = []
     
-    #Añadir un ciclo for aqui para la lista de simulacion
+    # Se Añade un ciclo for aqui para la lista de simulacion
 
     for t in range(dt):
 
@@ -278,8 +277,7 @@ def DTMC_SI(beta, poblacion, c_tiempo, duracion, infectado): #Markov_Chain_epide
     #Entonces podemos usar el mismo modelo
     #donde I sea el vector de infectados
     #S el vector de entidades susceptibles
-    #El ultimo contagia, podrías cambiar el beta y gamma posiblemente
-    dt = int(duracion/c_tiempo)
+        dt = int(duracion/c_tiempo)
     M_T = np.matrix(np.zeros((dt,dt)))
     M_T[0,0]=1
     Tc = []
@@ -562,8 +560,7 @@ def diferencias2(Matriz, coeficientes, pesos_fila):
         
         i += 1
 
-        #Idea, volver a copiar el mismo bucle y solo cambiar el valor por la prob_E/F / pesototal_E/F por el valor que ya tiene la matriz
-    
+            
     for rows in Matriz.index: #Para toda fila en los indices de la matriz haga
         
         rows = rows[0]
@@ -749,18 +746,18 @@ def dijkstra(graph, start, end):
                     prev[neighbor] = node
                     # Añadimos el vecino a la cola de prioridad
                     heapq.heappush(heap, (new_distance, neighbor))
-    # Creamos una lista para almacenar el camino más corto
+    # Creo una lista para almacenar el camino más corto
     path = []
-    # Establecemos el nodo final como el nodo actual
+    # Establezco el nodo final como el nodo actual
     node = end
-    # Mientras tengamos un nodo previo
+    # Mientras tenga un nodo previo
     while node is not None:
         # Añadimos el nodo a la lista
         
         path.append(node[0][0:])
-        # Actualizamos el nodo actual con su nodo previo
+        # Actualizo el nodo actual con su nodo previo
         node = prev[node]
-    # Devolvemos la lista invertida (del nodo final al nodo inicial)
+    # Devolvo la lista invertida (del nodo final al nodo inicial)
     return path[::-1]
 
 #https://chat.openai.com/chat
@@ -769,7 +766,7 @@ def dijkstra(graph, start, end):
 # This code is contributed by Divyanshu Mehta
 
 
-#Por ultimo el ambito competitivo
+#Por ultimo el escenario competitivo
 
 def competencia(Ai, A_k, B, M, M_caracteristicas,m):
     
@@ -816,7 +813,7 @@ def competencia(Ai, A_k, B, M, M_caracteristicas,m):
     for i in D_A_i:
         dex2 = A_k.index(i)
         
-        if D_AI/D_A_i[i] >= 1 and M[dex][dex2] != 0: #Posible correccion borrar el comentario anterior hasta aqui D_AI
+        if D_AI/D_A_i[i] >= 1 and M[dex][dex2] != 0: 
             
             inf.update({i : D_AI/D_A_i[i]})
             
@@ -852,9 +849,9 @@ def competencia(Ai, A_k, B, M, M_caracteristicas,m):
     
     m = m.transpose()
     
-    prob_com_debil = len(inf)/(len(sup)+len(inf)) # Si mi forma de llegar 
+    prob_com_debil = len(inf)/(len(sup)+len(inf)) # Si la forma de llegar 
     #Al recurso es mas larga que la de la competencia, entonces
-    #Sere un competidor debil
+    #Seré un competidor debil
     
     prob_com_fuerte = len(sup)/(len(sup)+len(inf))# Caso contrario,
     #Tendre una ventaja al competir, esta ventanja se puede mejorar
@@ -878,14 +875,8 @@ def estimar_beta(mean, var):
     
     return(alpha, beta)
     
-    #Creo que aquí va un coeficiente de Jaccard se distribuye Beta
-    #Generar la uniforme
-    #Si U < la acumulada de (Y)
-#Metodo de simulacion de la matriz por medio de Bernoullis
-
-
-
-#La simulacion de coeficientes se puede hacer bajo condicionales
+   
+#La simulacion de coeficientes se hace bajo los siguientes condicionales
 def new_conex(M_conex):
     
     np.random.seed(1)
